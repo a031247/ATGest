@@ -129,7 +129,7 @@ public class dataBase {
         return object;
     }
 
-    public long saveClient(JSONObject client){
+    public long addClient(JSONObject client){
         ContentValues values = new ContentValues();
         try {
             values.put("id", client.getInt("id"));
@@ -149,7 +149,7 @@ public class dataBase {
         return database.insert("clients", null, values);
     }
 
-    public long updateClient(JSONObject client){
+    public long updateClientSync(JSONObject client){
         ContentValues values = new ContentValues();
         int clientId = 0;
         try {
@@ -163,6 +163,22 @@ public class dataBase {
             values.put("status", client.getInt("status"));
             values.put("userstamp", client.getString("userstamp"));
             values.put("created_at", client.getString("created_at"));
+            values.put("updated_at", client.getString("updated_at"));
+        }catch(Exception e){
+            Log.e("client.getString() ", e.getMessage());
+        }
+        return database.update("clients", values, "id=" + clientId, null);
+    }
+
+    public long updateClient(JSONObject client){
+        ContentValues values = new ContentValues();
+        int clientId = 0;
+        try {
+            clientId = client.getInt("id");
+            values.put("postal_code", client.getString("postal_code"));
+            values.put("address", client.getString("address"));
+            values.put("location", client.getString("location"));
+            values.put("obs", client.getString("obs"));
             values.put("updated_at", client.getString("updated_at"));
         }catch(Exception e){
             Log.e("client.getString() ", e.getMessage());

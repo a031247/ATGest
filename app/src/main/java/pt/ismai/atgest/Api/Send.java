@@ -1,5 +1,7 @@
 package pt.ismai.atgest.Api;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
@@ -34,7 +36,7 @@ public class Send {
             return sb.toString();
         }
         catch(Exception e){
-            return new String(e.getMessage());
+            return e.getMessage();
         }
     }
 
@@ -56,7 +58,7 @@ public class Send {
             return sb.toString();
         }
         catch(Exception e){
-            return new String(e.getMessage());
+            return e.getMessage();
         }
     }
 }

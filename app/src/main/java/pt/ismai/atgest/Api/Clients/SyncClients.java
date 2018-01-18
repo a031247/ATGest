@@ -10,17 +10,18 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import pt.ismai.atgest.DB.dataBase;
 
-public final class SyncClients extends AsyncTask<Void, Void, List<JSONObject>> {
+public final class SyncClients extends AsyncTask<Void, Void, ArrayList<JSONObject>> {
     protected dataBase db;
     protected Button buttonAction;
     protected ProgressBar progressBar;
     protected JSONArray array;
-    protected List<JSONObject> updateList;
+    protected ArrayList<JSONObject> updateList;
     protected UpdateRemoteClient tskUpdateRemoteClient;
 
     @Override
@@ -32,10 +33,10 @@ public final class SyncClients extends AsyncTask<Void, Void, List<JSONObject>> {
     }
 
     @Override
-    protected List<JSONObject> doInBackground(Void... url){
+    protected ArrayList<JSONObject> doInBackground(Void... url){
         try {
                 JSONObject registoRemoto, registoLocal;
-
+                updateList = new ArrayList<JSONObject>();
                 for(int i = 0; i < array.length(); i++){
                     registoRemoto = array.getJSONObject(i);
                     registoLocal = db.getClient(registoRemoto.getInt("id"));
@@ -47,11 +48,11 @@ public final class SyncClients extends AsyncTask<Void, Void, List<JSONObject>> {
                             updateList.add(registoLocal);
                             Log.i("Editar cliente remoto:","" + registoRemoto.getInt("id"));
                         }else if(dateLocal.before(dateRemoto)){
-                            db.updateClient(registoRemoto);
+                            db.updateClientSync(registoRemoto);
                             Log.i("Editar cliente local:","" + registoRemoto.getInt("id"));
                         }
                     }else{
-                        db.saveClient(registoRemoto);
+                        db.addClient(registoRemoto);
                         Log.i("Registo Novo:","" + registoRemoto.getInt("id"));
                     }
                 }
@@ -67,8 +68,8 @@ public final class SyncClients extends AsyncTask<Void, Void, List<JSONObject>> {
     }
 
     @Override
-    protected void onPostExecute(List<JSONObject> updateList){
-        if(updateList != null) {
+    protected void onPostExecute(ArrayList<JSONObject> updateList){
+        if(updateList.size() > 0) {
             for (JSONObject registo : updateList) {
                 tskUpdateRemoteClient = new UpdateRemoteClient(db, registo);
                 tskUpdateRemoteClient.execute();

@@ -20,23 +20,14 @@ public final class UpdateRemoteClient extends AsyncTask<Void, Void, String> {
     protected dataBase db;
     protected JSONObject client;
     protected int clientId = 0;
-    protected ArrayList<String[]> params;
     protected String strParams;
 
     @Override
     protected void onPreExecute(){
-        JSONObject postParams = buildJsonParams(params);
         try {
             clientId = client.getInt("id");
-            params = new ArrayList<String[]>();
-            params.add(new String[]{"api_token", db.getUserApiToken()});
-            params.add(new String[]{"name", client.getString("name")});
-            params.add(new String[]{"postal_code", client.getString("postal_code")});
-            params.add(new String[]{"address", client.getString("address")});
-            params.add(new String[]{"location", client.getString("location")});
-            params.add(new String[]{"obs", client.getString("obs")});
-            params.add(new String[]{"updated_at", client.getString("updated_at")});
-            strParams = getPostDataString(postParams);
+            client.put("api_token", db.getUserApiToken());
+            strParams = getPostDataString(client);
         }catch(Exception e) {
             Log.e("Exceção Pre Execute: ", e.getMessage());
         }
