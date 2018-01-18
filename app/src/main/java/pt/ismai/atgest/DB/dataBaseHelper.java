@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class dataBaseHelper extends SQLiteOpenHelper{
     private static final String DATABASE_NAME = "atgest.db";
-    private static final int VERSION = 4;
+    private static final int VERSION = 5;
 
     public dataBaseHelper(Context context) {
         super(context, DATABASE_NAME, null, VERSION);
@@ -37,14 +37,30 @@ public class dataBaseHelper extends SQLiteOpenHelper{
                         " updated_at datetime" +
                         ");";
 
+        String tableAts =
+                "CREATE TABLE ats(" +
+                        "id integer primary key autoincrement," +
+                        " clientid integer," +
+                        " datestart datetime," +
+                        " datefinish datetime," +
+                        " syncronized integer," +
+                        " userstamp integer," +
+                        " clientsignature longblob," +
+                        " obs text," +
+                        " created_at datetime," +
+                        " updated_at datetime" +
+                        ");";
+
         db.execSQL(tableUser);
         db.execSQL(tableClients);
+        db.execSQL(tableAts);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         db.execSQL("DROP TABLE IF EXISTS user");
         db.execSQL("DROP TABLE IF EXISTS clients");
+        db.execSQL("DROP TABLE IF EXISTS ats");
         onCreate(db);
     }
 }
