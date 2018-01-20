@@ -11,6 +11,7 @@ import android.util.Log;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class dataBase {
@@ -33,6 +34,7 @@ public class dataBase {
     public void ClearUserData(){
         database.delete("user", null, null);
         database.delete("clients", null, null);
+        database.delete("ats", null, null);
     }
 
     public Long saveUserInfo(JSONObject userInfo){
@@ -184,5 +186,129 @@ public class dataBase {
             Log.e("client.getString() ", e.getMessage());
         }
         return database.update("clients", values, "id=" + clientId, null);
+    }
+
+    public JSONObject getAt(int id){
+        JSONObject object = new JSONObject();
+        Cursor cursor = database.rawQuery(
+                "SELECT * FROM ats WHERE id=?", new String[] { String.valueOf(id) });
+        if (cursor.moveToFirst()) {
+            try {
+                object.put("id", cursor.getInt(0));
+                object.put("clientid", cursor.getInt(1));
+                object.put("datestart", cursor.getString(2));
+                object.put("datefinish", cursor.getString(3));
+                object.put("syncronized", cursor.getInt(4));
+                object.put("userstamp", cursor.getInt(5));
+                object.put("clientsignature", cursor.getString(6));
+                object.put("obs", cursor.getString(7));
+                object.put("created_at", cursor.getString(8));
+                object.put("updated_at", cursor.getString(9));
+            }catch(Exception e){
+                Log.e("getAt: ", e.getMessage());
+            }
+        }
+        cursor.close();
+        return object;
+    }
+
+    public ArrayList<JSONObject> getAts(){
+        ArrayList<JSONObject> ats = new ArrayList<JSONObject>();
+        JSONObject object;
+        String[] colunas = {"id", "clientid", "datestart", "datefinish"};
+        Cursor cursor = database.query("ats", colunas, null, null, null, null, "id DESC");
+        if(cursor.moveToFirst()){
+            try {
+                do{
+                    object = new JSONObject();
+                    object.put("id", cursor.getInt(0));
+                    object.put("clientid", cursor.getInt(1));
+                    object.put("datestart", cursor.getString(2));
+                    object.put("datefinish", cursor.getString(3));
+                    ats.add(object);
+                } while (cursor.moveToNext());
+            }catch(Exception e){
+                Log.e("getAts: ", e.getMessage());
+            }
+        }
+        cursor.close();
+        return ats;
+    }
+
+    public long addAt(JSONObject at){
+        ContentValues values = new ContentValues();
+        try {
+            values.put("clientid", at.getInt("clientid"));
+            values.put("datestart", at.getString("datestart"));
+            values.put("datefinish", at.getString("datefinish"));
+            values.put("syncronized", at.getInt("syncronized"));
+            values.put("userstamp", at.getInt("userstamp"));
+            values.put("clientsignature", at.getString("clientsignature"));
+            values.put("obs", at.getString("obs"));
+            values.put("created_at", at.getString("created_at"));
+            values.put("updated_at", at.getString("updated_at"));
+        }catch(Exception e){
+            Log.e("addAt", e.getMessage());
+        }
+        return database.insert("ats", null, values);
+    }
+
+    public long updateAt(JSONObject at){
+        ContentValues values = new ContentValues();
+        int atId = 0;
+        try {
+            atId = at.getInt("id");
+            values.put("clientid", at.getInt("clientid"));
+            values.put("datestart", at.getString("datestart"));
+            values.put("datefinish", at.getString("datefinish"));
+            values.put("syncronized", 0);
+            values.put("obs", at.getString("obs"));
+            values.put("updated_at", at.getString("updated_at"));
+        }catch(Exception e){
+            Log.e("updateAt", e.getMessage());
+        }
+        return database.update("ats", values, "id=" + atId, null);
+    }
+
+    public ArrayList<JSONObject> getAtsByMonthYear(int year, int month){
+        JSONObject at;
+        String clientName;
+        Cursor cName;
+        ArrayList<JSONObject> ats = new ArrayList<JSONObject>();
+        String sYear = String.valueOf(year);
+        String sMonth = month < 10 ? "0" + month : String.valueOf(month);
+
+        Cursor cursor = database.rawQuery(
+                "SELECT id, clientid, datestart, datefinish FROM ats WHERE strftime('%Y', datestart) = strftime('%Y', '" +
+                        sYear + "-" + sMonth +
+                        "-01') AND strftime('%m', datestart) = strftime('%m', '" +
+                        sYear + "-" + sMonth +
+                        "-01')", null);
+        if(cursor.moveToFirst()){
+            do{
+                cName = database.rawQuery(
+                        "SELECT name FROM clients WHERE id=?", new String[] { String.valueOf(cursor.getInt(1)) });
+                if (cName.moveToFirst())
+                    clientName = cName.getString(0);
+                else
+                    clientName = "(Sem Cliente)";
+
+                cName.close();
+
+                at = new JSONObject();
+                try {
+                    at.put("id", cursor.getInt(0));
+                    at.put("name", clientName);
+                    at.put("datestart", cursor.getString(2));
+                    at.put("datefinish", cursor.getString(3));
+                    ats.add(at);
+                }catch(Exception e){
+                    Log.e("getAtsByMonthYear: ", e.getMessage());
+                }
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        return ats;
     }
 }

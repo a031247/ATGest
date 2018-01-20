@@ -23,35 +23,19 @@
             android:id="@+id/weekView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:columnGap="0dp"
+            app:columnGap="1dp"
+            app:eventMarginVertical="4dp"
             app:dayBackgroundColor="#05000000"
             app:eventTextColor="@android:color/white"
             app:headerColumnBackground="#ffffffff"
-            app:headerColumnPadding="8dp"
+            app:headerColumnPadding="1dp"
             app:headerColumnTextColor="#8f000000"
             app:headerRowBackgroundColor="#ffefefef"
             app:headerRowPadding="12dp"
-            app:hourHeight="30dp"
+            app:hourHeight="60dp"
             app:noOfVisibleDays="7"
-            app:textSize="12sp"
+            app:textSize="10sp"
             app:todayBackgroundColor="#1848adff" />
 
     </LinearLayout>
-
-    <Button
-        android:id="@+id/button2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="Button"
-        app:layout_constraintBottom_toBottomOf="@+id/linearLayout2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.971"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
-
 </android.support.constraint.ConstraintLayout>

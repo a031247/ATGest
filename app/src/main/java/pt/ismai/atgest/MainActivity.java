@@ -1,5 +1,6 @@
 package pt.ismai.atgest;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -44,23 +45,27 @@ import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 
 import pt.ismai.atgest.DB.dataBase;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, WeekView.EventClickListener, MonthLoader.MonthChangeListener, WeekView.EventLongPressListener, WeekView.EmptyViewLongPressListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, WeekView.EventClickListener, MonthLoader.MonthChangeListener, WeekView.EventLongPressListener, WeekView.EmptyViewLongPressListener, WeekView.ScrollListener {
     protected Intent intent;
     protected Toolbar toolbar;
     protected dataBase db;
     protected TextView sideBarUsername, sideBarEmail;
     protected ImageView sideBarThumb;
     protected WeekView mWeekView;
-    protected Button button2;
+    protected Calendar currentDateTime;
+    protected SimpleDateFormat sdfMe;
 
     protected void onStart(){
         super.onStart();
@@ -75,24 +80,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
+    protected void onResume(){
+        super.onResume();
+        mWeekView.invalidate();
+        mWeekView.goToToday();
+        mWeekView.goToHour(8.0);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setNavigationHeader();
 
-        button2 = (Button) findViewById(R.id.button2);
-
-        button2.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                mWeekView.goToToday();
-            }
-        });
+        currentDateTime = Calendar.getInstance();
 
         intent = null;
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle("Assistências Técnicas");
+        sdfMe = new SimpleDateFormat("MMM", Locale.getDefault());
+        toolbar.setTitle("ATs - " + sdfMe.format(currentDateTime.getTime()).toUpperCase() + " / " + currentDateTime.get(Calendar.YEAR));
         setSupportActionBar(toolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -120,17 +127,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mWeekView.setMonthChangeListener(this);
         mWeekView.setEventLongPressListener(this);
         mWeekView.setEmptyViewLongPressListener(this);
+        mWeekView.setScrollListener(this);
         setupDateTimeInterpreter(true);
+    }
+
+    private void translateMonth(int month){
+
     }
 
     private void setupDateTimeInterpreter(final boolean shortDate) {
         mWeekView.setDateTimeInterpreter(new DateTimeInterpreter() {
             @Override
             public String interpretDate(Calendar date) {
-                SimpleDateFormat weekdayNameFormat = new SimpleDateFormat("EEE", Locale.getDefault());
-                String weekday = dayToPt(weekdayNameFormat.format(date.getTime()));
+                SimpleDateFormat weekdayNameFormat = new SimpleDateFormat("E", Locale.getDefault());
+                String weekday = weekdayNameFormat.format(date.getTime());
+                String weekdayShort = ""+weekday.charAt(0) + weekday.charAt(1) + weekday.charAt(2);
                 SimpleDateFormat dayFormat = new SimpleDateFormat("d", Locale.getDefault());
-                return weekday + dayFormat.format(date.getTime());
+                return weekdayShort.toUpperCase() + " " + dayFormat.format(date.getTime());
             }
 
             @Override
@@ -140,46 +153,42 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
-    private String dayToPt(String day){
-        String dayPt;
-        switch (day){
-            case "Mon": dayPt = "SEG";
-                break;
-            case "Tue": dayPt = "TER";
-                break;
-            case "Wed": dayPt = "QUA";
-                break;
-            case "Thu": dayPt = "QUI";
-                break;
-            case "Fri": dayPt = "SEX";
-                break;
-            case "Sat": dayPt = "SAB";
-                break;
-            case "Sun": dayPt = "DOM";
-                break;
-            default: dayPt ="";
-                break;
-        }
-        return dayPt;
-    }
-
     protected String getEventTitle(Calendar time) {
         return String.format("Event of %02d:%02d %s/%d", time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE), time.get(Calendar.MONTH)+1, time.get(Calendar.DAY_OF_MONTH));
     }
 
     @Override
     public void onEventClick(WeekViewEvent event, RectF eventRect) {
-        Toast.makeText(this, "Clicked " + event.getName(), Toast.LENGTH_SHORT).show();
+        Intent x = new Intent(getApplicationContext(), EditAtActivity.class);
+        String id = String.valueOf(event.getId());
+        x.putExtra("id", id);
+        startActivity(x);
+        //Toast.makeText(this, "Clicked " + event.getId(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onEventLongPress(WeekViewEvent event, RectF eventRect) {
-        Toast.makeText(this, "Long pressed event: " + event.getName(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, event.getName(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onEmptyViewLongPress(Calendar time) {
-        Toast.makeText(this, "Empty view long pressed: " + getEventTitle(time), Toast.LENGTH_SHORT).show();
+        int year,month,day,hour;
+        year = time.get(Calendar.YEAR);
+        month = time.get(Calendar.MONTH) + 1;
+        day = time.get(Calendar.DAY_OF_MONTH);
+        hour = time.get(Calendar.HOUR_OF_DAY);
+
+        Intent x = new Intent(getApplicationContext(), NewAtActivity.class);
+        String[] sTime = new String[4];
+        sTime[0] = "" + year;
+        sTime[1] = month < 10 ? "0" + month : "" + month;
+        sTime[2] = day < 10 ? "0" + day : "" + day;
+        sTime[3] = hour < 10 ? "0" + hour : "" + hour;
+
+        x.putExtra("time", sTime);
+        startActivity(x);
+        //Toast.makeText(this, "Empty view long pressed: " + getEventTitle(time), Toast.LENGTH_SHORT).show();
     }
 
     public WeekView getWeekView() {
@@ -289,87 +298,48 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public List<? extends WeekViewEvent> onMonthChange(int newYear, int newMonth) {
-        // Populate the week view with some events.
+        ArrayList<JSONObject> ats = db.getAtsByMonthYear(newYear, newMonth);
         List<WeekViewEvent> events = new ArrayList<WeekViewEvent>();
+        SimpleDateFormat sdfD = new SimpleDateFormat("dd");
+        SimpleDateFormat sdfH = new SimpleDateFormat("HH");
+        SimpleDateFormat sdfM = new SimpleDateFormat("mm");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         Calendar startTime;
         Calendar endTime;
         WeekViewEvent event;
 
-        startTime = Calendar.getInstance();
-        startTime.set(Calendar.HOUR_OF_DAY, 3);
-        startTime.set(Calendar.MINUTE, 0);
-        startTime.set(Calendar.MONTH, newMonth-1);
-        startTime.set(Calendar.YEAR, newYear);
-        endTime = (Calendar) startTime.clone();
-        endTime.set(Calendar.HOUR_OF_DAY, 3);
-        endTime.set(Calendar.MINUTE, 30);
-        endTime.set(Calendar.MONTH, newMonth-1);
-        event = new WeekViewEvent(10, getEventTitle(startTime), startTime, endTime);
-        event.setColor(getResources().getColor(R.color.event_color_02));
-        events.add(event);
+        if(ats.size() > 0) {
+            try{
+                for (JSONObject at : ats) {
+                    startTime = Calendar.getInstance();
+                    endTime = Calendar.getInstance();
+                    startTime.set(Calendar.DAY_OF_MONTH, Integer.parseInt(sdfD.format(sdf.parse(at.getString("datestart")))));
+                    startTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(sdfH.format(sdf.parse(at.getString("datestart")))));
+                    startTime.set(Calendar.MINUTE, Integer.parseInt(sdfM.format(sdf.parse(at.getString("datestart")))));
+                    startTime.set(Calendar.MONTH, newMonth-1);
+                    startTime.set(Calendar.YEAR, newYear);
+                    endTime.set(Calendar.DAY_OF_MONTH, Integer.parseInt(sdfD.format(sdf.parse(at.getString("datefinish")))));
+                    endTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(sdfH.format(sdf.parse(at.getString("datefinish")))));
+                    endTime.set(Calendar.MINUTE, Integer.parseInt(sdfM.format(sdf.parse(at.getString("datefinish")))));
 
-        startTime = Calendar.getInstance();
-        startTime.set(Calendar.HOUR_OF_DAY, 5);
-        startTime.set(Calendar.MINUTE, 30);
-        startTime.set(Calendar.MONTH, newMonth-1);
-        startTime.set(Calendar.YEAR, newYear);
-        endTime = (Calendar) startTime.clone();
-        endTime.add(Calendar.HOUR_OF_DAY, 2);
-        endTime.set(Calendar.MONTH, newMonth-1);
-        event = new WeekViewEvent(2, getEventTitle(startTime), startTime, endTime);
-        event.setColor(getResources().getColor(R.color.event_color_02));
-        events.add(event);
-
-        startTime = Calendar.getInstance();
-        startTime.set(Calendar.HOUR_OF_DAY, 5);
-        startTime.set(Calendar.MINUTE, 0);
-        startTime.set(Calendar.MONTH, newMonth - 1);
-        startTime.set(Calendar.YEAR, newYear);
-        startTime.add(Calendar.DATE, 1);
-        endTime = (Calendar) startTime.clone();
-        endTime.add(Calendar.HOUR_OF_DAY, 3);
-        endTime.set(Calendar.MONTH, newMonth - 1);
-        event = new WeekViewEvent(3, getEventTitle(startTime), startTime, endTime);
-        event.setColor(getResources().getColor(R.color.event_color_03));
-        events.add(event);
-
-        startTime = Calendar.getInstance();
-        startTime.set(Calendar.DAY_OF_MONTH, 15);
-        startTime.set(Calendar.HOUR_OF_DAY, 3);
-        startTime.set(Calendar.MINUTE, 0);
-        startTime.set(Calendar.MONTH, newMonth-1);
-        startTime.set(Calendar.YEAR, newYear);
-        endTime = (Calendar) startTime.clone();
-        endTime.add(Calendar.HOUR_OF_DAY, 3);
-        event = new WeekViewEvent(4, getEventTitle(startTime), startTime, endTime);
-        event.setColor(getResources().getColor(R.color.event_color_04));
-        events.add(event);
-
-        startTime = Calendar.getInstance();
-        startTime.set(Calendar.DAY_OF_MONTH, 1);
-        startTime.set(Calendar.HOUR_OF_DAY, 3);
-        startTime.set(Calendar.MINUTE, 0);
-        startTime.set(Calendar.MONTH, newMonth-1);
-        startTime.set(Calendar.YEAR, newYear);
-        endTime = (Calendar) startTime.clone();
-        endTime.add(Calendar.HOUR_OF_DAY, 3);
-        event = new WeekViewEvent(5, getEventTitle(startTime), startTime, endTime);
-        event.setColor(getResources().getColor(R.color.event_color_01));
-        events.add(event);
-
-        startTime = Calendar.getInstance();
-        startTime.set(Calendar.DAY_OF_MONTH, startTime.getActualMaximum(Calendar.DAY_OF_MONTH));
-        startTime.set(Calendar.HOUR_OF_DAY, 15);
-        startTime.set(Calendar.MINUTE, 0);
-        startTime.set(Calendar.MONTH, newMonth-1);
-        startTime.set(Calendar.YEAR, newYear);
-        endTime = (Calendar) startTime.clone();
-        endTime.add(Calendar.HOUR_OF_DAY, 3);
-        event = new WeekViewEvent(5, getEventTitle(startTime), startTime, endTime);
-        event.setColor(getResources().getColor(R.color.event_color_02));
-        events.add(event);
+                    endTime.set(Calendar.MONTH, newMonth-1);
+                    event = new WeekViewEvent(at.getInt("id"), at.getString("name"), startTime, endTime);
+                    event.setColor(getResources().getColor(R.color.event_color_02));
+                    events.add(event);
+                }
+            }catch(Exception e) {
+                Log.e("calendar", e.getMessage());
+            }
+        }
 
         return events;
+    }
+
+    public void onFirstVisibleDayChanged(Calendar newDay, Calendar oldDay){
+        if(currentDateTime.get(Calendar.MONTH) != newDay.get(Calendar.MONTH)) {
+            toolbar.setTitle("ATs - " + sdfMe.format(newDay.getTime()).toUpperCase() + " / " + newDay.get(Calendar.YEAR));
+            currentDateTime.set(Calendar.MONTH, newDay.get(Calendar.MONTH));
+        }
     }
 }
